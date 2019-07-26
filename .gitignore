@@ -1,0 +1,13 @@
+*.pyc
+*.log
+*.prefs
+.idea
+.vscode
+images
+.scrapy
+output
+*.db
+crawls/
+mysql/
+machine.bin
+backups/

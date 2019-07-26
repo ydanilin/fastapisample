@@ -1,0 +1,161 @@
+Links to study:
+https://fastapi.tiangolo.com/
+
+https://github.com/tiangolo/fastapi
+docker builds:
+https://github.com/tiangolo/uwsgi-nginx-flask-docker
+
+https://gitter.im/tiangolo/fastapi
+
+Articles:
+https://dev.to/errietta/introduction-to-the-fastapi-python-framework-2n10
+https://dev.to/vintharas/boost-your-coding-fu-with-visual-studio-code-and-vimboost-your-coding-fu-with-visual-studio-code-and-vim-502h
+
+Containers
+https://medium.com/@hmajid2301/using-multiple-docker-containers-to-setup-nginx-flask-and-postgres-c77a9f3ed077
+
+google: fastapi
+
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' yach
+
+Let's Encrypt и nginx: настройка в Debian и Ubuntu:
+https://habr.com/ru/post/318952/
+
+server {
+    listen [::]:80;
+    listen 80;
+    server_name demo.rcd.ai;
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+server {
+    listen [::]:443 ssl http2;
+    listen 443 ssl http2;
+    server_name demo.rcd.ai;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    ssl_certificate /etc/letsencrypt/live/demo.rcd.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/demo.rcd.ai/privkey.pem;
+
+    root /var/www/demo/;
+
+    index index.html;
+
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+      proxy_pass http://localhost:1234; # Port of Python server
+    }
+
+    # JavaScript/CSS
+    location ~* \.(?:css|js)$ {
+        try_files $uri =404;
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    # Any file route
+    location ~ ^.+\..+$ {
+        try_files $uri =404;
+    }
+}
+
+
+# Clone code to folder
+cd /var/www
+git clone https://github.com/rcdilorenzo/fastapi-react-demo.git demo-server
+
+# Install Python-3.6 based virtualenv (to avoid version conflicts)
+apt-get install -y python3.6-venv python3-venv python3.6-dev
+
+# Jump into server folder
+cd demo-server
+
+# Create virtual environment in /var/www/demo-server/demo_3.6
+python3.6 -m venv demo_3.6
+
+# Install a couple of prerequisites for compiling some dependencies
+./demo_3.6/bin/pip install wheel
+apt-get install -y gcc
+
+# Install dependencies
+./demo_3.6/bin/pip install -r requirements.txt
+
+With the dependencies installed, the server can be started inline for testing.
+
+./demo_3.6/bin/uvicorn app.server:app --port 1234
+
+pip freeze | grep "fastapi\|uvicorn\|toolz" > requirements.txt
+
+-- volume for socket file
+docker volume create --name=uvicorn_sockdir
+docker volume create --name=app-db-data
+
+-- python + uvicorn
+docker build -t fapi ./web
+
+docker run -d --rm --name fapi \
+-v $(pwd):/app \
+-v uvicorn_sockdir:/var/uvicorn_sockdir \
+fapi \
+uvicorn web.main:app --uds /var/uvicorn_sockdir/backend.sock
+
+-- nginx
+docker build -t nginx ./nginx
+
+docker run -d --rm --name nginx \
+-v $(pwd)/nginx/fapi.conf:/etc/nginx/conf.d/fapi.conf \
+-v $(pwd)/nginx/logs:/etc/nginx/logs \
+-v uvicorn_sockdir:/var/uvicorn_sockdir \
+-p 80:80 \
+nginx
+
+-- postgres
+docker run -d --rm --name postgres \
+--env-file postgres/database.conf \
+-v uvicorn_sockdir:/var/run/postgresql \
+-v app-db-data:/var/lib/postgresql/data/pgdata \
+-p 5432:5432 \
+postgres:11
+
+
+PYTHONPATH=. alembic upgrade head
+
+docker run --name admi --link postgres:example -p 8080:8080 -d --rm adminer
+
+
+psql tips:
+enter:
+psql <dbname> -U <username>
+list databases: \l
+list tables: \dt
+see table structure: \d+ <table name>
+
+chmod +x filename.sh
+
+Docker volumes are there:
+/var/lib/docker/volumes/uvicorn_sockdir/_data
+
+Download whole site:
+(https://www.linuxjournal.com/content/downloading-entire-web-site-wget)
+wget \
+     --recursive \
+     --no-clobber \
+     --page-requisites \
+     --html-extension \
+     --convert-links \
+     --domains website.org \
+     --no-parent \
+         www.website.org/tutorials/html/
+
+psql:
+\! chcp 1251
+"C:\Program Files\PostgreSQL\10\bin\psql.exe" -h %server% -U %username% -d %database% -p %port%
+
+Test connection from alembic:
+alembic current

@@ -1,7 +1,7 @@
 run:
 	bash run_develop.sh
 depend:
-	pip freeze | grep "fastapi\|uvicorn\|SQLAlchemy\|alembic\|psycopg2\|python-multipart\|pyjwt\|passlib\|bcrypt" > ./web/backend/requirements.txt
+	pip freeze | grep "fastapi\|uvicorn\|SQLAlchemy\|alembic\|psycopg2\|python-multipart\|pyjwt\|passlib\|bcrypt\|emails" > ./web/backend/requirements.txt
 buildweb:
 	docker build -t fapi ./web
 dockback:

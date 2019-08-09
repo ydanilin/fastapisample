@@ -26,7 +26,7 @@ def is_country_blacklisted(
     """
     Some countries may be **blacklisted** due to the following reasons:
 
-    - they have **Putin**
+    - due to **Putin**
     - they have Somali pirates
     - other reasons as decided by the Zionist Occupational Government
     """
